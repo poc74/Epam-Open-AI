@@ -22,7 +22,6 @@ public class GitHubCodeReader {
     private static final String REPO_OWNER = "poc74";
     private static final String REPO_NAME = "springboot";
     private static final String BRANCH = "wxw"; // or any branch you want to read from
-    private static final String GITHUB_TOKEN = "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"; // Add your GitHub token here
 
     private final CloseableHttpClient httpClient = HttpClients.createDefault();
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);
