@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>OpenAI GPT-4 REST Stream Sample with SSE</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .container {
+            max-width: 80%;
+            margin: 0 auto;
+        }
+
+        .input-container {
+            margin-bottom: 1rem;
+            white-space: pre-wrap;
+            word-break: normal;
+            width: 100%;
+            background-color: #faf2f2;
+            border: 1px solid #ced4da;
+            padding: 1rem;
+            border-radius: .25rem;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            resize: vertical;
+            border: 1px solid #ced4da;
+            border-radius: .25rem;
+            padding: .5rem;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            background-color: #1b9592;
+            color: #fff;
+            border: none;
+            border-radius: .25rem;
+            padding: .75rem 1.25rem;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #3f8585;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 0.2rem;
+        }
+
+        .error-message {
+            color: red;
+            text-align: center;
+            margin-top: 1rem;
+        }
+    </style>
+    <script>
+        let userId;
+        let eventSource;
+
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                var r = Math.random() * 16 | 0,
+                    v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        window.onload = function () {
+            userId = generateUUID();
+            setupEventSource();
+        };
+
+        function setupEventSource() {
+            eventSource = new EventSource("/openai-gpt4-stream?userId=" + userId);
+            eventSource.addEventListener('message', function (event) {
+                var responseContainer = document.getElementById("responseContainer");
+                const replaceWhiteSpace = event.data.replace(/<SPECIAL_WHITE_SPACEr>/g, " ");
+                const finalShowData = replaceWhiteSpace.replace(/<SPECIAL_LINE_SEPARATOR>/g, "\n");
+
+                responseContainer.textContent += finalShowData;
+                if (event.id == "CLOSE") {
+                    console.log("Received CLOSE event");
+                    eventSource.close();
+                    toggleLoading(false);
+                }
+            });
+
+            eventSource.addEventListener('error', function (event) {
+                console.error("EventSource failed: ", event);
+                displayError("An error occurred while receiving the stream. Please try again.");
+                eventSource.close();
+                toggleLoading(false);
+            });
+        }
+
+        function submitText() {
+            const textFieldValue = document.getElementById("inputText").value;
+            if (!textFieldValue.trim()) {
+                displayError("Please enter some text before submitting.");
+                return;
+            }
+
+            if (eventSource.readyState == EventSource.CLOSED) {
+                setupEventSource();
+            }
+
+            toggleLoading(true);
+            clearError();
+            document.getElementById("responseContainer").textContent = "";
+
+            fetch("/openai-gpt4-submit?userId=" + userId, {
+                method: "POST",
+                body: textFieldValue,
+                headers: {
+                    "Content-Type": "text/plain"
+                }
+            }).catch(error => {
+                console.error("Error submitting text: ", error);
+                displayError("An error occurred while submitting the text. Please try again.");
+                toggleLoading(false);
+            });
+        }
+
+        function toggleLoading(show) {
+            const loadingElement = document.getElementById("loading");
+            loadingElement.style.display = show ? "block" : "none";
+        }
+
+        function displayError(message) {
+            const errorElement = document.getElementById("errorMessage");
+            errorElement.textContent = message;
+            errorElement.style.display = "block";
+        }
+
+        function clearError() {
+            const errorElement = document.getElementById("errorMessage");
+            errorElement.textContent = "";
+            errorElement.style.display = "none";
+        }
+    </script>
+</head>
+
+<body>
+<h1>Epam App</h1>
+<div class="container">
+    <div class="input-container">
+        <textarea id="inputText" placeholder="Enter your text here..."></textarea>
+        <button onclick="submitText()">Submit</button>
+        <div id="loading" class="loading">Loading...</div>
+        <div id="errorMessage" class="error-message"></div>
+    </div>
+    <div class="input-container" id="responseContainer"></div>
+</div>
+</body>
+
+</html>

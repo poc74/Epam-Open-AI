@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Mermaid.js with Thymeleaf</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="mermaid">
+    <pre th:text="${mermaidCode}"></pre>
+</div>
+
+<script>
+    // Initialize Mermaid when the document is ready
+    document.addEventListener('DOMContentLoaded', (event) => {
+        mermaid.initialize({ startOnLoad: true });
+    });
+</script>
+</body>
+</html>
