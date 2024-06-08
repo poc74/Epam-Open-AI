@@ -17,7 +17,7 @@ public class GitHub {
 
     private static final String USERNAME = "poc74";
 
-    private static final String ACCESS_TOKEN = "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";
+    private static final String ACCESS_TOKEN = "delete me";
 
 
     @PostMapping("/createRepo")
